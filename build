@@ -1,0 +1,3 @@
+#!/bin/sh
+/usr/local/cuda-12.3/bin/nvcc -O2 test.cu -lcuda -o test
+gcc -I/usr/local/cuda-12.3/targets/x86_64-linux/include/ -O2 -Wall -fPIC -shared -o tflarge.so tflarge.c -ldl
