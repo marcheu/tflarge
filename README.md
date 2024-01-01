@@ -8,7 +8,9 @@ TFlarge is a hack to allow using large tensorflow models on GPUs with limited VR
 Go to the TFlarge directory, then:
 
 $ ./build
+
 $ export LD_PRELOAD=/path/to/tflarge.so
+
 [use tensor flow normally]
 
 
