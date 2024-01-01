@@ -1,6 +1,6 @@
 # TFlarge
 
-##-Summary
+## Summary
 TFlarge is a hack to allow using large tensorflow models on GPUs with limited VRAM.
 
 
