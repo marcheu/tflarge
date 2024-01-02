@@ -23,6 +23,7 @@ static void __attribute__((constructor (101))) cuda_override_init ()
 		printf ("================== CUDA HACK FAILED TO PREPARE ======================\n");
 		exit (1);
 	} else {
+		putenv("TF_GPU_ALLOCATOR=cuda_malloc_async");
 		printf ("================== CUDA HACK PREPARED ===============================\n");
 	}
 }

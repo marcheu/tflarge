@@ -11,8 +11,6 @@ $ ./build
 
 $ export LD_PRELOAD=/path/to/tflarge.so
 
-$ export TF_GPU_ALLOCATOR=cuda_malloc_async
-
 [use tensor flow normally]
 
 
