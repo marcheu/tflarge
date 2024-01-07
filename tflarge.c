@@ -17,20 +17,26 @@ static void *(*lib_dlsym) (void *, const char *) = 0;
 static void __attribute__((constructor (101))) cuda_override_init ()
 {
 	lib_handle_dl = dlopen ("libdl.so.2", RTLD_LAZY);
-	lib_dlsym = dlvsym (lib_handle_dl, "dlsym", "GLIBC_2.2.5");
 
-	if (!lib_handle_dl || !lib_dlsym) {
+	if (lib_handle_dl)
+		lib_dlsym = dlvsym (lib_handle_dl, "dlsym", "GLIBC_2.2.5");
+
+	if (!lib_dlsym || !lib_handle_dl) {
 		printf ("================== CUDA HACK FAILED TO PREPARE ======================\n");
 		exit (1);
-	} else {
-		putenv("TF_GPU_ALLOCATOR=cuda_malloc_async");
-		printf ("================== CUDA HACK PREPARED ===============================\n");
 	}
+
+	putenv ("TF_GPU_ALLOCATOR=cuda_malloc_async");
+	printf ("================== CUDA HACK PREPARED ===============================\n");
 }
 
 void *dlsym (void *handle, const char *name)
 {
 	void *ret;
+
+	if (!lib_dlsym)
+		cuda_override_init ();
+
 	if (!strcmp (name, "cuMemAlloc_v2"))
 		ret = cuMemAlloc_v2;
 	else if (!strcmp (name, "cuMemAllocFromPoolAsync"))
@@ -45,27 +51,22 @@ void *dlsym (void *handle, const char *name)
 
 static void init ()
 {
-	static int init_done = 0;
-
-	if (init_done)
+	if (lib_cuMemAllocManaged)
 		return;
-	else
-		init_done = 1;
 
 	lib_handle_cuda = dlopen ("libcuda.so.1", RTLD_LAZY);
-	if (!lib_handle_cuda)
-		goto fail;
-	lib_cuMemAllocManaged = lib_dlsym (lib_handle_cuda, "cuMemAllocManaged");
-	lib_cuMemFree_v2 = lib_dlsym (lib_handle_cuda, "cuMemFree_v2");
-	if (!lib_cuMemAllocManaged || !lib_cuMemFree_v2)
-		goto fail;
+	if (lib_handle_cuda) {
+		lib_cuMemAllocManaged = lib_dlsym (lib_handle_cuda, "cuMemAllocManaged");
+		lib_cuMemFree_v2 = lib_dlsym (lib_handle_cuda, "cuMemFree_v2");
+	}
+
+	if (!lib_cuMemAllocManaged || !lib_cuMemFree_v2) {
+		printf ("================== CUDA HACK FAILED TO INITIALIZE ======================\n");
+		exit (1);
+	}
 	printf ("================== CUDA HACK INITIALIZED ===============================\n");
 
 	return;
-
-fail:
-	printf ("================== CUDA HACK FAILED TO INITIALIZE ======================\n");
-	exit (1);
 }
 
 CUresult cuMemFreeAsync (CUdeviceptr dptr, CUstream hStream)
